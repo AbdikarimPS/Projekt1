@@ -1,0 +1,110 @@
+﻿using System;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class Shop : MonoBehaviour
+{
+    [SerializeField] private ItemList itemList = null;
+    [SerializeField] private PlayerStats pS = null;
+    [SerializeField] private Timer timer = null;
+
+    [SerializeField] private Text priceText, minStatusText, maxStatusText, descriptionText = null;
+    [SerializeField] private GameObject purchased = null;
+    [SerializeField] private Base_State Data = null;
+    bool bought = false;
+
+    private void Start()
+    {
+        Data.minStatus = 0;
+        priceText.text = Data.price.ToString();
+        minStatusText.text = Data.minStatus.ToString();
+        maxStatusText.text = "/ " + Data.maxStatus.ToString();
+        descriptionText.text = Data.Description.ToString();
+        priceText.text = Data.price.ToString();
+        
+    }
+    public void SwitchStates()
+    {
+        switch(Data.State)
+        {
+            case State.ItemIngredients:
+                ItemTransition();
+                break;
+            case State.ItemAutoClick:
+                ActiveAutoClcick();
+                break;
+            case State.DecreaseTimer:
+                ItemDecreaseTimer();
+                break;
+        } 
+    }
+
+    private void ItemTransition()
+    {
+        SetLockSound();
+        if (Data.minStatus >= Data.maxStatus || Data.price > pS.coins) { return; }
+            pS.coins -= Data.price;
+            Data.price += 50;
+            Data.minStatus++;
+        
+        priceText.text = Data.price.ToString();
+            minStatusText.text = Data.minStatus.ToString();
+            
+        itemList.itemData[Data.Itemtype].minValue += 1;
+            itemList.itemData[Data.Itemtype].maxValue += 1;
+        PlaySound();
+    }
+
+
+    private void ActiveAutoClcick()
+    {
+        SetLockSound();
+        if (Data.minStatus >= Data.maxStatus || Data.price > pS.coins) { return; }
+            timer.autoclick = true;
+            Data.minStatus++;
+        
+        minStatusText.text = Data.minStatus.ToString();
+            pS.coins -= Data.price;
+            PlaySound();
+    }
+
+    private void ItemDecreaseTimer()
+    {
+        float p = 1;
+        SetLockSound();
+
+        if (Data.minStatus >= Data.maxStatus || Data.price > pS.coins) { return; };
+        
+        Data.minStatus++;
+        minStatusText.text = Data.minStatus.ToString();
+        pS.coins -= Data.price;
+        
+        p = p - 0,1;
+        
+        PlaySound();
+    }
+    private void PlaySound()
+    {
+        if (Data.minStatus == Data.maxStatus && bought == false ) 
+        {
+            purchased.SetActive(true);
+            itemList.audio.clip = itemList.sounds[0];
+            itemList.audio.Play();
+            bought = true;
+        }
+        if (Data.minStatus != Data.maxStatus)
+        {
+            itemList.audio.clip = itemList.sounds[3];
+            itemList.audio.Play();
+        }
+    }
+
+    private void SetLockSound()
+    {
+        if (Data.price > pS.coins || bought == true)
+        {
+            itemList.audio.clip = itemList.sounds[4];
+            itemList.audio.Play();
+        }
+    }
+}
